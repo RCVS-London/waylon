@@ -139,7 +139,8 @@ class Parser:
                                                                              LibPageColumn,
                                                                              LibArticleColumn,
                                                                              LibAuthorColumn,
-                                                                             LibSubjectColumn
+                                                                             LibSubjectColumn,
+                                                                             LibCatalogueEntryURLColumn
                                                                          ])
                 image_index += 1
 
@@ -196,6 +197,7 @@ LibPageColumn = 'Page'
 LibArticleColumn = 'Article'
 LibAuthorColumn = 'Author'
 LibSubjectColumn = 'Subject'
+LibCatalogueEntryURLColumn = 'Catalogue Entry URL'
 
 # archive data column names
 ArcFilenameColumn = 'File name'
