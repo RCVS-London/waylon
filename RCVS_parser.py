@@ -62,13 +62,14 @@ class Parser:
                                                                     ArcSeriesColumn,
                                                                     ArcSubSeriesColumn,
                                                                     ArcCopyrightColumn,
+                                                                    ArcPermalinkColumn
                                                                 ])
                 viewing_mode = row[ViewingModeColumn]
                 flags['Viewing_Mode'] = viewing_mode
                 first = False
             else:
 
-                origin = settings.RCVS_RELATIVE + 'arc/' + row.get(ArcFilenameColumn)
+                origin = settings.RCVS_RELATIVE + row.get(ArcFilenameColumn)
                 image = Image(space=settings.CURRENT_SPACE, origin=origin, string_1=work.id, number_1=0, number_2=image_index)
                 images.append(image)
 
@@ -112,7 +113,8 @@ class Parser:
                                                                     LibMaterialTypeColumn,
                                                                     LibGeneralNoteColumn,
                                                                     LibLanguageColumn,
-                                                                    LibCopyrightColumn
+                                                                    LibCopyrightColumn,
+                                                                    LibPermalinkColumn
                                                                 ])
                 viewing_mode = row[ViewingModeColumn]
                 flags['Viewing_Mode'] = viewing_mode
@@ -121,7 +123,7 @@ class Parser:
             else:
 
                 # images
-                origin = settings.RCVS_RELATIVE + 'lib/' + row.get(LibFilenameColumn)
+                origin = settings.RCVS_RELATIVE + row.get(LibFilenameColumn)
                 image = Image(space=settings.CURRENT_SPACE, origin=origin, string_1=work.id, number_1=0, number_2=image_index)
                 images.append(image)
 
@@ -158,11 +160,11 @@ class Parser:
 
     def get_manifest_path_from_reference(self, reference):
 
-        return 'http://dlcs.io/iiif-resource/49/waylon-rcdd/' + reference + '/0'
+        return 'http://dlcs.io/iiif-resource/50/waylon-rcdd/' + reference + '/0'
 
     def get_images_for_work_path(self, reference):
 
-        return 'http://dlcs.io/raw-resource/49/waylon-rcdd/' + reference + '/0'
+        return 'http://dlcs.io/raw-resource/50/waylon-rcdd/' + reference + '/0'
 
     def custom_decoration(self, data, manifest):
 
@@ -171,6 +173,10 @@ class Parser:
             mode = flags.get('Viewing_Mode')
             if mode is not None and mode == "2":
                 manifest['sequences'][0]['viewingHint'] = 'paged'
+
+        manifest['logo'] = "http://uv.rcvsvethistory.org/RCVS_Knowledge_Logo_whiteout.png"
+
+        manifest['attribution'] = "<a href='http://www.rcvsvethistory.org/'>RCVS Vet History</a> brought to you by RCVS Knowledge"
 
 # --Column Mappings-- #
 
@@ -191,6 +197,7 @@ LibMaterialTypeColumn = 'Material Type'
 LibGeneralNoteColumn = 'General Note'
 LibLanguageColumn = 'Language'
 LibCopyrightColumn = 'Copyright'
+LibPermalinkColumn = 'Permalink'
 
 # Library data columns names - image
 LibPageColumn = 'Page'
@@ -208,6 +215,7 @@ ArcSeriesColumn = 'Series'
 ArcSubSeriesColumn = 'Subseries'
 ArcCatalogueRefColumn = 'Catalogue ref'
 ArcCopyrightColumn = 'Copyright'
+ArcPermalinkColumn = "Permalink"
 
 # archive data column names - image
 ArcImageCatalogueRefColumn = 'Catalogue ref'
@@ -217,5 +225,6 @@ ArcDescriptionColumn = 'Description'
 ArcCreatorColumn = 'Creator'
 ArcFormatColumn = 'Format'
 ArcCatalogueEntryURLColumn = 'Catalogue Entry URL'
+
 
 
