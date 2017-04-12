@@ -1,7 +1,6 @@
 import importlib
 import settings
 import boto3
-from botocore.client import Config
 import json
 import requests
 import logging
@@ -24,40 +23,25 @@ def main():
     logging.getLogger('botocore').setLevel(logging.ERROR)
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
-    app.run(threaded=True, debug=True, port=8000, host='0.0.0.0')
+    app.run(threaded=True, debug=True, port=80, host='0.0.0.0')
     logging.info("Waylon-Fuse server started")
 
 
 @app.route('/work/<manifest_reference>')
 def get_manifest_for_work(manifest_reference):
 
-    config = Config(connect_timeout=5, read_timeout=10)
-    s3_client = boto3.client('s3', config=config)
+    p_ = importlib.import_module(settings.PARSER_PATH)
+    parser = p_.Parser(space=settings.CURRENT_SPACE)
+
+    s3_client = boto3.client('s3')
     logging.error("S3 client %s" % (s3_client,))
     logging.debug("Request recieved for manifest reference: " + str(manifest_reference))
     logging.getLogger('boto').setLevel(logging.CRITICAL)
     work_reference = manifest_reference.replace('.manifest', '')
-    decorated_manifest = get_decorated_manifest(s3_client, work_reference)
-    if decorated_manifest is not None:
-        return decorated_manifest, 200, {'Content-Type': 'text/css; charset=utf-8'}
-    else:
-        return "Error", 500
-
-
-def get_decorated_manifest(s3_client, work_reference):
-
-    decorated_manifest = load_decorated_manifest(s3_client, work_reference)
-    if decorated_manifest is not None:
-        return decorated_manifest
-
-    # no manifest in s3, generate
-
-    p_ = importlib.import_module(settings.PARSER_PATH)
-    parser = p_.Parser(space=settings.CURRENT_SPACE)
     data = load_work_meta(s3_client, work_reference)
     if data is None:
         logging.error("Work data not found: " + str(work_reference))
-        return None
+        return "work not found", 500
 
     # use named query to get manifest from dlcs
     path = parser.get_manifest_path_from_reference(work_reference)
@@ -66,7 +50,7 @@ def get_decorated_manifest(s3_client, work_reference):
     req = requests.get(path)
     if req.status_code is not 200:
         logging.error("Error obtaining manifest")
-        return None
+        return "error", 500
 
     else:
         manifest_string = req.text
@@ -84,35 +68,8 @@ def get_decorated_manifest(s3_client, work_reference):
 
         parser.custom_decoration(data, manifest)
 
-        decorated_manifest_string = json.dumps(manifest)
-
-        # might get (over)written a number of times if requested again before saved but will stop once it first saves
-        if decorated_manifest_string is not None:
-            store_decorated_manifest(s3_client, work_reference, decorated_manifest_string)
-        else:
-            logging.error("Generated decorated manifest was None")
-
-        return decorated_manifest_string
-
-
-def load_decorated_manifest(s3_client, work_reference):
-
-    key = 'work-' + str(work_reference) + ".manifest"
-    try:
-        obj = s3_client.get_object(Bucket=settings.META_S3, Key=key)
-    except:
-        return None
-    return obj['Body'].read()
-
-
-def store_decorated_manifest(s3_client, work_reference, decorated_manifest):
-
-    try:
-        s3_client.put_object(Bucket=settings.META_S3, Key='work-' + str(work_reference) + ".manifest",
-                             Body=decorated_manifest)
-    except:
-        logging.exception("error obtaining metadata")
-        return None
+        # return manifest
+        return json.dumps(manifest), 200, {'Content-Type': 'text/css; charset=utf-8'}
 
 
 def update_manifest_ids(manifest):
@@ -194,10 +151,11 @@ def get_collection(collection_reference):
 def load_work_meta(s3_client, reference_id):
 
     try:
+        logging.error('ref id : %s in bucket %s' % (reference_id, settings.META_S3))
         obj = s3_client.get_object(Bucket=settings.META_S3, Key='work-' + str(reference_id))
         return json.loads(obj['Body'].read(), object_pairs_hook=OrderedDict)
     except:
-        logging.exception("error obtaining metadata")
+	logging.exception("error obtaining metadata")
         return None
 
 if __name__ == "__main__":
