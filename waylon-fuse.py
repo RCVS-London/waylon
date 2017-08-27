@@ -155,7 +155,7 @@ def load_work_meta(s3_client, reference_id):
         obj = s3_client.get_object(Bucket=settings.META_S3, Key='work-' + str(reference_id))
         return json.loads(obj['Body'].read(), object_pairs_hook=OrderedDict)
     except:
-	logging.exception("error obtaining metadata")
+        logging.exception("error obtaining metadata")
         return None
 
 if __name__ == "__main__":
